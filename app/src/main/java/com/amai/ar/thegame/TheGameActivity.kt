@@ -1,9 +1,12 @@
 package com.amai.ar.thegame
 
-
 import android.annotation.SuppressLint
 import android.app.AlertDialog
+import android.app.Notification
+import android.app.NotificationManager
+import android.content.Context
 import android.content.DialogInterface
+import android.graphics.Color
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -14,7 +17,7 @@ import androidx.appcompat.app.AppCompatActivity
 import java.util.*
 
 
-class MainActivity : AppCompatActivity() {
+class TheGameActivity : AppCompatActivity() {
 
     private var textView_answer: TextView? = null
     private var textView_guess: TextView? = null
@@ -36,9 +39,11 @@ class MainActivity : AppCompatActivity() {
         buttonB = findViewById(R.id.buttonB) as Button
         buttonC = findViewById(R.id.buttonC) as Button
 
-       guessPattern()
+        guessPattern()
+
 
     }
+
 
     fun generateRandomPattern(len: Int): String {
         val chars = ("ABC")
@@ -47,20 +52,26 @@ class MainActivity : AppCompatActivity() {
         for (i in 0 until len)
             sb.append(chars[rnd.nextInt(chars.length)])
 
-        return sb.toString()
+        return "The correct answer is "+sb.toString()
     }
 
     fun guessPattern(): String {
 
+        val notif: NotificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        notif.cancel(1) // clear previous notification
+        val notification = Notification()
+        notification.icon = R.drawable.ic_launcher_background
+
         val sb = StringBuilder()
-        val str4 = sb.toString()
+        val str4 =sb.toString()
 
         buttonA!!.setOnClickListener {
             if (sb.length<3){
                 sb.append("A")
                 textView_guess?.text = sb
             }
-
+            notification.ledARGB = Color.RED
         }
 
         buttonB!!.setOnClickListener {
@@ -69,6 +80,7 @@ class MainActivity : AppCompatActivity() {
 
                 textView_guess?.text = sb
             }
+            notification.ledARGB = Color.GREEN
         }
 
         buttonC!!.setOnClickListener {
@@ -77,18 +89,19 @@ class MainActivity : AppCompatActivity() {
 
                 textView_guess?.text = sb
             }
+            notification.ledARGB = Color.YELLOW
         }
 
+        notification.ledARGB = Color.DKGRAY
 
         textView_guess?.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
-                if (s?.length ==3)
-                {
+                if (s?.length == 3) {
                     val a = generateRandomPattern(3)
-                    Log.d("Apple ",a)
+                    Log.d("Apple ", a)
                     textView_answer?.text = a
 
-                    if (a == textView_guess?.text.toString()){
+                    if (a == textView_guess?.text.toString()) {
                         createDialog(a)
                     }
                 }
@@ -101,28 +114,36 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
+        notification.ledOnMS = 1000
+        notification.flags = notification.flags or Notification.FLAG_SHOW_LIGHTS
+        notif.notify(1, notification)
+        try {
+            java.lang.Thread.sleep(1000)
+        } catch (e: InterruptedException) {
+            e.printStackTrace()
+        }
+
         return str4
 
     }
 
-    fun createDialog(A : String){
+    fun createDialog(A: String){
 
         val dialogBuilder = AlertDialog.Builder(this)
-        dialogBuilder.setTitle("The Correct Answer is "+ A)
+        dialogBuilder.setTitle("The Correct Answer is " + A)
         // set message of alert dialog
         dialogBuilder.setMessage("Restart Game")
                 // if the dialog is cancelable
                 .setCancelable(false)
                 // positive button text and action
-                .setPositiveButton("Proceed", DialogInterface.OnClickListener {
-                    dialog, id ->
+                .setPositiveButton("Proceed", DialogInterface.OnClickListener { dialog, id ->
                     textView_answer?.setText("")
                     textView_guess?.setText("")
                     guessPattern()
                 })
                 // negative button text and action
-                .setNegativeButton("Cancel", DialogInterface.OnClickListener {
-                    dialog, id -> dialog.cancel()
+                .setNegativeButton("Cancel", DialogInterface.OnClickListener { dialog, id ->
+                    dialog.cancel()
                 })
 
         // create dialog box
